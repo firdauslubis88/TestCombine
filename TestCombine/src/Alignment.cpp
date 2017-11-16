@@ -1,4 +1,5 @@
 #include "Alignment.h"
+//#define USE_SIFT_EXTRACTOR
 
 bool Alignment::alreadyCreated = false;
 bool Alignment::alreadyChanged = false;
@@ -11,6 +12,9 @@ int Alignment::xReturn = 0;
 int Alignment::yReturn = 0;
 Ptr<Map> Alignment::mapPtr;
 int Alignment::counter = 0;
+float Alignment::widthRatio = 0;
+float Alignment::heightRatio = 0;
+
 
 Alignment::Alignment()
 {
@@ -166,28 +170,23 @@ void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width
 			Alignment::ptzAlign(refImage, inputImage, x, y, mask_width, mask_height);
 		}
 #endif // USE_PTZ_ADJUSTMENT
+		double ratio;
+		imresize(refImage, 360, ratio);
+		imresize(inputImage, 360, ratio);
+
 		std::vector<KeyPoint> keypoints_ref, keypoints_input;
 		Mat descriptors_ref, descriptors_input;
-		Rect ROIRef = Rect(x, y, mask_width, mask_height);
+		std::vector<DMatch> good_matches;
+		Rect ROIRef = Rect(x/ratio, y/ratio, mask_width/ratio, mask_height/ratio);
 		Mat ROIRefMask = Mat(inputImage.size(), CV_8UC1, Scalar::all(0));
-//		std::cout << ROIRef.x << " " << ROIRef.y << " " << ROIRef.width << " " << ROIRef.height << " " << std::endl;
-//		std::cout << ROIRefMask.cols << " " << ROIRefMask.rows << std::endl;
 		ROIRefMask(ROIRef).setTo(Scalar::all(255));
 
-		Mat refImg, inputImg, refImgs[3], inputImgs[3];
-		cv::cvtColor(refImage, refImg, CV_BGR2HSV);
-		cv::cvtColor(inputImage, inputImg, CV_BGR2HSV);
-		cv::split(refImg, refImgs);
-		cv::split(inputImg, inputImgs);
-
+#ifdef USE_SIFT_EXTRACTOR
 		detector->detectAndCompute(refImage, ROIRefMask, keypoints_ref, descriptors_ref);
 		detector->detectAndCompute(inputImage, Mat(), keypoints_input, descriptors_input);
-//		Mat temp_img_kp;
-//		drawKeypoints(refImage, keypoints_ref, temp_img_kp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
 
 		FlannBasedMatcher matcher;
 		vector<vector<DMatch>> kmatches;
-		vector<DMatch> good_matches;
 
 		matcher.knnMatch(descriptors_ref, descriptors_input, kmatches, 2);
 		std::sort(kmatches.begin(), kmatches.end());
@@ -203,23 +202,50 @@ void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width
 				good_matches.push_back(kmatches[i][0]);
 			}
 		}
+#else
+		Ptr<ORB> orb = ORB::create(1000);
+		orb->setFastThreshold(0);
+		orb->detectAndCompute(refImage, ROIRefMask, keypoints_ref, descriptors_ref);
+		orb->detectAndCompute(inputImage, Mat(), keypoints_input, descriptors_input);
 
-		vector<Point2f> ptsTemp, ptsTemp2;
+		BFMatcher matcher(NORM_HAMMING);
+		std::vector<DMatch> matches_all;
+		matcher.match(descriptors_ref, descriptors_input, matches_all);
+
+		// GMS filter
+		int num_inliers = 0;
+		std::vector<bool> vbInliers;
+		gms_matcher gms(keypoints_ref, refImage.size(), keypoints_input, inputImage.size(), matches_all);
+		num_inliers = gms.GetInlierMask(vbInliers, false, false);
+
+//		std::cout << "Get total " << num_inliers << " matches." << std::endl;
+
+		// draw matches
+		for (size_t i = 0; i < vbInliers.size(); ++i)
+		{
+			if (vbInliers[i] == true)
+			{
+				good_matches.push_back(matches_all[i]);
+			}
+		}
+
+#endif
+		std::vector<Point2f> ptsTemp, ptsTemp2;
 		for (int i = 0; i < good_matches.size(); i++)
 		{
 			Point3f pnt;
 			//-- Get the keypoints from the good matches
-			ptsTemp.push_back(keypoints_ref[good_matches[i].queryIdx].pt);
-			ptsTemp2.push_back(keypoints_input[good_matches[i].trainIdx].pt);
+			ptsTemp.push_back(keypoints_ref[good_matches[i].queryIdx].pt * ratio);
+			ptsTemp2.push_back(keypoints_input[good_matches[i].trainIdx].pt * ratio);
 		}
-		vector<Point2f> ptsROI, ptsROI2;
+		std::vector<Point2f> ptsROI, ptsROI2;
 		ptsROI = ptsTemp;
 		ptsROI2 = ptsTemp2;
 
 		Mat h;
 		if (ptsROI.size() >= 3)
 		{
-			vector<Mat> ptsxy(2), pts2xy(2);
+			std::vector<Mat> ptsxy(2), pts2xy(2);
 			Rect ROI, ROI2;
 			double smallestX, largestX, smallestY, largestY;
 			h = estimateRigidTransform(ptsROI2, ptsROI, false);
@@ -232,7 +258,7 @@ void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width
 				Mat img_matches;
 				drawMatches(refImage, keypoints_ref, inputImage, keypoints_input,
 					good_matches, img_matches, Scalar::all(-1), Scalar::all(-1),
-					vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
+					std::vector<char>(), DrawMatchesFlags::NOT_DRAW_SINGLE_POINTS);
 				std::ostringstream name;
 				name << "bin/data/matches_im_" << Alignment::counter << ".jpg";
 				imwrite(name.str(), img_matches);

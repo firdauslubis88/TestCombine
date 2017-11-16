@@ -13,6 +13,7 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/calib3d.hpp>
 
+#include "gms_matcher.h"
 
 using namespace std;
 using namespace cv;
@@ -38,6 +39,7 @@ public:
 	static Ptr<Map> mapPtr;
 	~Alignment();
 
+
 private:
 	static Ptr<SURF> detector;
 	static float comparisonThreshold;
@@ -45,5 +47,7 @@ private:
 	static bool alreadyCreated;
 	static int minHessian;
 	static int counter;
+	static float widthRatio;
+	static float heightRatio;
 };
 

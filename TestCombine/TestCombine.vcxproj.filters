@@ -37,6 +37,9 @@
     <ClCompile Include="src\CombinedCamera.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\gms_matcher.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -3813,6 +3816,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\CombinedCamera.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\gms_matcher.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

@@ -23,4 +23,6 @@ class ofApp : public ofBaseApp{
 		
 		ofImage ldImage, hdImage, combinedImage;
 		ofPixels ldPixel;
+
+		int i, j;
 };

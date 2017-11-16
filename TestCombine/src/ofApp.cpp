@@ -13,6 +13,8 @@ void ofApp::setup(){
 
 	ldPixel.allocate(ofGetWidth(), ofGetHeight(), OF_IMAGE_COLOR);
 	ldPixel = ldImage.getPixels();
+	
+	i = 0; j = 0;
 }
 
 //--------------------------------------------------------------
@@ -22,8 +24,28 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-	CombinedCamera::combine_align(ldPixel, hdImage, ofGetWidth(), 1080, ofGetWidth() / 3, ofGetHeight() / 3, ofGetWidth() / 3, ofGetHeight() / 3);
+	if (i == 0)
+	{
+		double start = (double)cv::getTickCount();
+		CombinedCamera::combine_align(ldPixel, hdImage, ofGetWidth(), 1080, ofGetWidth() / 3, ofGetHeight() / 3, ofGetWidth() / 3, ofGetHeight() / 3);
+		double end = (double)cv::getTickCount();
+		double timeSpan = (end - start) / cv::getTickFrequency();
+		std::cout << "GMS:\t" << timeSpan << std::endl;
+		i++;
+	}
+	double start; double timeSpan;
+	if (j == 0)
+	{
+		start = (double)cv::getTickCount();
+	}
 	combinedImage.setFromPixels(CombinedCamera::combine_direct(ldPixel, hdImage, ofGetWidth(), 1080, ofGetWidth() / 3, ofGetHeight() / 3, ofGetWidth() / 3, ofGetHeight() / 3));
+	if (j == 0)
+	{
+		double end = (double)cv::getTickCount();
+		timeSpan = (end - start) / cv::getTickFrequency();
+		j++;
+		std::cout << "setPixels:\t" << timeSpan << std::endl;
+	}
 	combinedImage.draw(0, 0, ofGetWidth(), 1080);
 
 //	hdImage.draw(0, 0, ofGetWidth(), ofGetHeight());

@@ -1,7 +1,7 @@
 #include "CombinedCamera.h"
 
 ofxCvColorImage CombinedCamera::ldCvImage, CombinedCamera::hdCvImage, CombinedCamera::combinedCvImage, CombinedCamera::ldCvImage2, CombinedCamera::hdCvImage2, CombinedCamera::combinedCvImage2;
-bool CombinedCamera::skipCloning = false, CombinedCamera::skipAligning = false, CombinedCamera::alreadyInitialized = false;
+bool CombinedCamera::skipCloning = true, CombinedCamera::skipAligning = false, CombinedCamera::alreadyInitialized = false;
 
 
 CombinedCamera::CombinedCamera(int image_width,int image_height)

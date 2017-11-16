@@ -547,6 +547,7 @@ C:\Users\chemf\Documents\Visual Studio 2015\Projects\of_v0.9.8_vs_release\addons
     <ClCompile Include="src\Alignment.cpp" />
     <ClCompile Include="src\Cloning.cpp" />
     <ClCompile Include="src\CombinedCamera.cpp" />
+    <ClCompile Include="src\gms_matcher.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\ofApp.cpp" />
   </ItemGroup>
@@ -1650,6 +1651,7 @@ C:\Users\chemf\Documents\Visual Studio 2015\Projects\of_v0.9.8_vs_release\addons
     <ClInclude Include="src\Alignment.h" />
     <ClInclude Include="src\Cloning.h" />
     <ClInclude Include="src\CombinedCamera.h" />
+    <ClInclude Include="src\gms_matcher.h" />
     <ClInclude Include="src\ofApp.h" />
   </ItemGroup>
   <ItemGroup>
