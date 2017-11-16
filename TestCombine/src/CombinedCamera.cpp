@@ -1,7 +1,7 @@
 #include "CombinedCamera.h"
 
 ofxCvColorImage CombinedCamera::ldCvImage, CombinedCamera::hdCvImage, CombinedCamera::combinedCvImage, CombinedCamera::ldCvImage2, CombinedCamera::hdCvImage2, CombinedCamera::combinedCvImage2;
-bool CombinedCamera::skipCloning = true, CombinedCamera::skipAligning = false, CombinedCamera::alreadyInitialized = false;
+bool CombinedCamera::skipCloning = false, CombinedCamera::skipAligning = false, CombinedCamera::alreadyInitialized = false;
 
 
 CombinedCamera::CombinedCamera(int image_width,int image_height)
@@ -142,8 +142,8 @@ ofPixels CombinedCamera::combine_direct(ofPixels ldPixel, ofImage hdImage, int i
 		Rect clone_mask_ROI = Rect(x, y, width, height);
 		clone_mask(clone_mask_ROI).setTo(Scalar(255));
 		cloneCenter = Point(x + width / 2, y + height / 2);
-		//		seamlessClone(source, target, clone_mask, cloneCenter, clone, 1);
-		Cloning::MVCSeamlessClone(source(Rect(x, y, width, height)), target, clone_mask, cloneCenter, clone);
+		//seamlessClone(source, target, clone_mask, cloneCenter, clone, 1);
+		mycv::Cloning::MVCSeamlessClone(source(Rect(x, y, width, height)), target, clone_mask, cloneCenter, clone);
 		/*How to integrate openFramework class with opencv class (from openCV -> oF):
 		1. Mat -> IplImage
 		2. IplImage -> IplImage*

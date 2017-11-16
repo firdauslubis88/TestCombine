@@ -171,8 +171,8 @@ void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width
 		}
 #endif // USE_PTZ_ADJUSTMENT
 		double ratio;
-		imresize(refImage, 360, ratio);
-		imresize(inputImage, 360, ratio);
+		imresize(refImage, refImage.rows, ratio);
+		imresize(inputImage, inputImage.rows, ratio);
 
 		std::vector<KeyPoint> keypoints_ref, keypoints_input;
 		Mat descriptors_ref, descriptors_input;

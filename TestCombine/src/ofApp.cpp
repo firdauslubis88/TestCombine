@@ -34,12 +34,12 @@ void ofApp::draw(){
 		i++;
 	}
 	double start; double timeSpan;
-	if (j == 0)
+	if (j > -1)
 	{
 		start = (double)cv::getTickCount();
 	}
 	combinedImage.setFromPixels(CombinedCamera::combine_direct(ldPixel, hdImage, ofGetWidth(), 1080, ofGetWidth() / 3, ofGetHeight() / 3, ofGetWidth() / 3, ofGetHeight() / 3));
-	if (j == 0)
+	if (j > -1)
 	{
 		double end = (double)cv::getTickCount();
 		timeSpan = (end - start) / cv::getTickFrequency();
