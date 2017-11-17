@@ -2,16 +2,15 @@
 
 #include "CombinedCamera.h"
 
+#define LOGTEST
+
 //--------------------------------------------------------------
 void ofApp::setup(){
+	hdWidth = 1280; hdHeight = 720;
 	ldImage.allocate(ofGetWidth(), ofGetHeight(), OF_IMAGE_COLOR);
 	hdImage.allocate(ofGetWidth(), ofGetHeight(), OF_IMAGE_COLOR);
-	combinedImage.allocate(ofGetWidth(), ofGetHeight(), OF_IMAGE_COLOR);
+	combinedImage.allocate(hdWidth, hdHeight, OF_IMAGE_COLOR);
 	ldPixel.allocate(ofGetWidth(), ofGetHeight(), OF_IMAGE_COLOR);
-	ldPixel = ldImage.getPixels();
-
-//	ldImage.load("ldImage_2.jpg");
-//	hdImage.load("hdImage_2.jpg");
 
 	std::vector<ofVideoDevice> devices = ldVideoGrabber.listDevices();
 	for each (ofVideoDevice device in devices)
@@ -19,7 +18,7 @@ void ofApp::setup(){
 		if (device.deviceName == "USB2.0 HD UVC WebCam")
 		{
 			hdVideoGrabber.setDeviceID(device.id);
-			hdVideoGrabber.setup(1280, 720);
+			hdVideoGrabber.setup(hdWidth, hdHeight);
 		}
 		else if (device.deviceName == "Creative GestureCam")
 		{
@@ -48,6 +47,22 @@ void ofApp::draw(){
 	{
 		hdVideoGrabber.draw(0, 0, ofGetWidth(), ofGetHeight());
 	}
+	else if (camSwitch == lubis::COMBINE)
+	{
+		ldPixel = ldVideoGrabber.getPixels();
+		ldPixel.resize(hdWidth, hdHeight);
+		hdImage.setFromPixels(hdVideoGrabber.getPixels());
+		CombinedCamera::combine_align(ldPixel, hdImage, hdWidth, hdHeight, hdWidth/3, hdHeight/3, hdWidth/3, hdHeight/3);
+		combinedImage.setFromPixels(CombinedCamera::combine_direct(ldPixel, hdImage, hdWidth, hdHeight, hdWidth/3, hdHeight/3, hdWidth/3, hdHeight/3));
+		combinedImage.draw(0, 0, ofGetWidth(), ofGetHeight());
+#ifdef LOGTEST
+//		std::cout << "Combined Image Width():\t" << combinedImage.getWidth() << std::endl;
+//		std::cout << "Combined Image Height():\t" << combinedImage.getHeight() << std::endl;
+#endif
+	}
+#ifdef LOGTEST
+	std::cout << ofGetFrameRate() << std::endl;
+#endif
 
 //	if (i == 0)
 //	{
@@ -92,8 +107,9 @@ void ofApp::keyPressed(int key){
 	{
 		camSwitch = lubis::NONE;
 	}
+	if (key == 'r')
 	{
-
+		CombinedCamera::restartAligning();
 	}
 }
 

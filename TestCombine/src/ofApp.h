@@ -37,5 +37,5 @@ class ofApp : public ofBaseApp{
 		ofVideoGrabber ldVideoGrabber, hdVideoGrabber;
 
 		lubis::CAMSWITCH camSwitch;
-		int i, j;
+		int i, j, hdWidth, hdHeight;
 };

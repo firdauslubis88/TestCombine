@@ -234,7 +234,7 @@ void CombinedCamera::combine_align(ofPixels ldPixel, ofImage hdImage, int image_
 		combinedCvImage2.allocate(image_width, image_height);
 		CombinedCamera::alreadyInitialized = true;
 	}
-
+	if (Alignment::alreadyChanged)return;
 	ofImage ldImage;
 
 	ldImage.setFromPixels(ldPixel);
@@ -286,5 +286,10 @@ void CombinedCamera::setSkipCloning(bool value)
 void CombinedCamera::setSkipAligning(bool value)
 {
 	CombinedCamera::skipAligning = value;
+}
+
+void CombinedCamera::restartAligning()
+{
+	Alignment::alreadyChanged = false;
 }
 
