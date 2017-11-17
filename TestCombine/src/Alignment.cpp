@@ -156,13 +156,8 @@ void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width
 {
 	Mat outputImage;
 	int countTest = 0;
-	if (!Alignment::alreadyChanged && countTest < 5)
+	while (!alreadyChanged && countTest < 5)
 	{
-		if (!alreadyCreated)
-		{
-			Alignment::detector = SURF::create(Alignment::minHessian);
-			alreadyCreated = true;
-		}
 #ifdef USE_PTZ_ADJUSTMENT
 		//		cout << "ALIGNING AGAIN" << endl;
 		if (!Alignment::ptzAlreadyChanged)
@@ -182,6 +177,11 @@ void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width
 		ROIRefMask(ROIRef).setTo(Scalar::all(255));
 
 #ifdef USE_SIFT_EXTRACTOR
+		if (!alreadyCreated)
+		{
+			Alignment::detector = SURF::create(Alignment::minHessian);
+			alreadyCreated = true;
+		}
 		detector->detectAndCompute(refImage, ROIRefMask, keypoints_ref, descriptors_ref);
 		detector->detectAndCompute(inputImage, Mat(), keypoints_input, descriptors_input);
 
@@ -203,7 +203,7 @@ void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width
 			}
 		}
 #else
-		Ptr<ORB> orb = ORB::create(1000);
+		Ptr<ORB> orb = ORB::create(5000);
 		orb->setFastThreshold(0);
 		orb->detectAndCompute(refImage, ROIRefMask, keypoints_ref, descriptors_ref);
 		orb->detectAndCompute(inputImage, Mat(), keypoints_input, descriptors_input);
@@ -264,10 +264,13 @@ void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width
 				imwrite(name.str(), img_matches);
 				Alignment::counter++;
 #endif // ALIGNMENT_CHECK
-
 			}
 		}
 		countTest++;
+		if (countTest >= 5)
+		{
+			Alignment::alreadyChanged = true;
+		}
 	}
 }
 
