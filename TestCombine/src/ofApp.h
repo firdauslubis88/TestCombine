@@ -2,6 +2,16 @@
 
 #include "ofMain.h"
 
+namespace lubis
+{
+	enum CAMSWITCH {
+		NONE,
+		LD,
+		HD,
+		COMBINE
+	};
+}
+
 class ofApp : public ofBaseApp{
 
 	public:
@@ -24,5 +34,8 @@ class ofApp : public ofBaseApp{
 		ofImage ldImage, hdImage, combinedImage;
 		ofPixels ldPixel;
 
+		ofVideoGrabber ldVideoGrabber, hdVideoGrabber;
+
+		lubis::CAMSWITCH camSwitch;
 		int i, j;
 };
