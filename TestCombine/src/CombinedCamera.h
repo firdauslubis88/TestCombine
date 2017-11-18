@@ -25,6 +25,8 @@ public:
 	static void setOrbCount(int orb);
 	static void setAlignmentMethod(lubis::ALIGNMENT_METHOD meth);
 
+	static double minHessianTime, orbCountTime, withoutCloningTime, withCloningTime;
+
 private:
 	std::shared_ptr<ofxCvImage> combinedImage;
 	static ofxCvColorImage ldCvImage, hdCvImage, combinedCvImage, ldCvImage2, hdCvImage2, combinedCvImage2;

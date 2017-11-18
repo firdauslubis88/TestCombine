@@ -74,10 +74,17 @@ void ofApp::draw(){
 //		std::cout << "Combined Image Height():\t" << combinedImage.getHeight() << std::endl;
 #endif
 	}
-#ifdef LOGTEST
-	std::cout << ofGetFrameRate() << std::endl;
-#endif
 	gui.draw();
+	ofDrawBitmapStringHighlight("Press 'q' for using clone", ofPoint(10, 120));
+	ofDrawBitmapStringHighlight("Press 'w' for not using clone", ofPoint(10, 150));
+	ofDrawBitmapStringHighlight("Press 'r' to restart aligning", ofPoint(10, 180));
+#ifdef LOGTEST
+	ofDrawBitmapStringHighlight("minHessianTime:\t\t" + std::to_string(CombinedCamera::minHessianTime), ofPoint(10, 210));
+	ofDrawBitmapStringHighlight("orbCountTime:\t\t" + std::to_string(CombinedCamera::orbCountTime), ofPoint(10, 240));
+	ofDrawBitmapStringHighlight("withoutCloningTime:\t" + std::to_string(CombinedCamera::withoutCloningTime), ofPoint(10, 270));
+	ofDrawBitmapStringHighlight("withCloningTime:\t" + std::to_string(CombinedCamera::withCloningTime), ofPoint(10, 300));
+#endif
+	ofDrawBitmapStringHighlight("FPS:\t\t\t" + std::to_string(ofGetFrameRate()), ofPoint(10, 350));
 }
 
 //--------------------------------------------------------------
@@ -101,6 +108,14 @@ void ofApp::keyPressed(int key){
 	if (key == 'r')
 	{
 		CombinedCamera::restartAligning();
+	}
+	if (key == 'w')
+	{
+		CombinedCamera::setSkipCloning(true);
+	}
+	if (key == 'q')
+	{
+		CombinedCamera::setSkipCloning(false);
 	}
 }
 
