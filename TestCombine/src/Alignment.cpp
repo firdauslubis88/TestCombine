@@ -6,6 +6,7 @@ bool Alignment::alreadyChanged = false;
 bool Alignment::ptzAlreadyChanged = false;
 Ptr<SURF> Alignment::detector = Ptr<SURF>();
 int Alignment::minHessian = 200;
+int Alignment::orbCount = 20000;
 float Alignment::comparisonThreshold = 0.7;
 Mat Alignment::hBig = Mat();
 int Alignment::xReturn = 0;
@@ -14,6 +15,7 @@ Ptr<Map> Alignment::mapPtr;
 int Alignment::counter = 0;
 float Alignment::widthRatio = 0;
 float Alignment::heightRatio = 0;
+lubis::ALIGNMENT_METHOD Alignment::AlignmentMethod = lubis::GMS;
 
 
 Alignment::Alignment()
@@ -26,36 +28,35 @@ Alignment::Alignment(int minHessian)
 	comparisonThreshold = 0.7;
 }
 
-#ifdef USE_PTZ_ADJUSTMENT
-void Alignment::ptzAlign(const Mat refImage, const Mat inputImage, const int x, const int y, const int mask_width, const int mask_height)
+void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width, int mask_height)
 {
-	if (!Alignment::ptzAlreadyChanged)
+	Mat outputImage;
+	int countTest = 0;
+	while (!alreadyChanged && countTest < 2)
 	{
-		if (!alreadyCreated)
-		{
-			Alignment::detector = SURF::create(Alignment::minHessian);
-			alreadyCreated = true;
-		}
-		Alignment::xReturn = 0;
-		Alignment::yReturn = 0;
-		while (1)
-		{
-			bool doneX = false, doneY = false;
-			cout << "Inside this" << endl;
-			std::vector<KeyPoint> keypoints_ref, keypoints_input;
-			Mat descriptors_ref, descriptors_input;
-			Rect ROIRef = Rect(x, y, mask_width, mask_height);
-			Mat ROIRefMask = Mat(inputImage.size(), CV_8UC1, Scalar::all(0));
-			ROIRefMask(ROIRef).setTo(Scalar::all(255));
+		double ratio;
+		imresize(refImage, refImage.rows, ratio);
+		imresize(inputImage, inputImage.rows, ratio);
 
+		std::vector<KeyPoint> keypoints_ref, keypoints_input;
+		Mat descriptors_ref, descriptors_input;
+		std::vector<DMatch> good_matches;
+		Rect ROIRef = Rect(x/ratio, y/ratio, mask_width/ratio, mask_height/ratio);
+		Mat ROIRefMask = Mat(inputImage.size(), CV_8UC1, Scalar::all(0));
+		ROIRefMask(ROIRef).setTo(Scalar::all(255));
+
+		if (Alignment::AlignmentMethod == lubis::SIFT)
+		{
+			if (!alreadyCreated)
+			{
+				Alignment::detector = SURF::create(Alignment::minHessian);
+				alreadyCreated = true;
+			}
 			detector->detectAndCompute(refImage, ROIRefMask, keypoints_ref, descriptors_ref);
 			detector->detectAndCompute(inputImage, Mat(), keypoints_input, descriptors_input);
-			Mat temp_img_kp;
-			drawKeypoints(refImage, keypoints_ref, temp_img_kp, Scalar::all(-1), DrawMatchesFlags::DEFAULT);
 
 			FlannBasedMatcher matcher;
 			vector<vector<DMatch>> kmatches;
-			vector<DMatch> good_matches;
 
 			matcher.knnMatch(descriptors_ref, descriptors_input, kmatches, 2);
 			std::sort(kmatches.begin(), kmatches.end());
@@ -71,165 +72,36 @@ void Alignment::ptzAlign(const Mat refImage, const Mat inputImage, const int x, 
 					good_matches.push_back(kmatches[i][0]);
 				}
 			}
+		}
+		else if (Alignment::AlignmentMethod == lubis::GMS)
+		{
+			Ptr<ORB> orb = ORB::create(Alignment::orbCount);
+			orb->setFastThreshold(0);
+			orb->detectAndCompute(refImage, ROIRefMask, keypoints_ref, descriptors_ref);
+			orb->detectAndCompute(inputImage, Mat(), keypoints_input, descriptors_input);
 
-			vector<Point2f> ptsTemp, ptsTemp2;
-			for (int i = 0; i < good_matches.size(); i++)
+			BFMatcher matcher(NORM_HAMMING);
+			std::vector<DMatch> matches_all;
+			matcher.match(descriptors_ref, descriptors_input, matches_all);
+
+			// GMS filter
+			int num_inliers = 0;
+			std::vector<bool> vbInliers;
+			gms_matcher gms(keypoints_ref, refImage.size(), keypoints_input, inputImage.size(), matches_all);
+			num_inliers = gms.GetInlierMask(vbInliers, false, false);
+
+			//		std::cout << "Get total " << num_inliers << " matches." << std::endl;
+
+			// draw matches
+			for (size_t i = 0; i < vbInliers.size(); ++i)
 			{
-				Point3f pnt;
-				//-- Get the keypoints from the good matches
-				ptsTemp.push_back(keypoints_ref[good_matches[i].queryIdx].pt);
-				ptsTemp2.push_back(keypoints_input[good_matches[i].trainIdx].pt);
-			}
-			vector<Point2f> ptsROI, ptsROI2;
-			ptsROI = ptsTemp;
-			ptsROI2 = ptsTemp2;
-
-			Mat h;
-			int localXReturn = 0, localYReturn = 0;
-			Point2f inputMean, refMean, inputTotal = Point2f(0, 0), refTotal = Point2f(0, 0);
-			if (ptsROI.size() >= 3)
-			{
-				for (int i = 0; i < ptsROI.size(); i++)
+				if (vbInliers[i] == true)
 				{
-					refTotal += ptsROI[i];
-					inputTotal += ptsROI2[i];
-				}
-				refMean = refTotal / (int)ptsROI.size();
-				inputMean = inputTotal / (int)ptsROI2.size();
-				if (inputMean.x < refMean.x)
-				{
-					localXReturn = -1;
-				}
-				else
-				{
-					localXReturn = 1;
-				}
-				if (inputMean.y < refMean.y)
-				{
-					localYReturn = 1;
-				}
-				else
-				{
-					localYReturn = -1;
-				}
-
-				if (!doneX)
-				{
-					if ((abs(inputMean.x - refMean.x) < 200))
-					{
-						Alignment::xReturn = 0;
-						doneX = true;
-						cout << "DONE X" << endl;
-
-					}
-					else
-					{
-						Alignment::xReturn = localXReturn;
-					}
-				}
-				if (!doneY)
-				{
-					if ((abs(inputMean.y - refMean.y) < 200))
-					{
-						Alignment::yReturn = 0;
-						doneY = true;
-						cout << "DONE Y" << endl;
-					}
-					else
-					{
-						Alignment::yReturn = localYReturn;
-					}
-				}
-				if (doneX && doneY)
-				{
-					Alignment::ptzAlreadyChanged = true;
-					cout << "DONE ALL" << endl;
-					break;
+					good_matches.push_back(matches_all[i]);
 				}
 			}
 		}
-	}
-}
-#endif // USE_PTZ_ADJUSTMENT
 
-void Alignment::align(Mat refImage, Mat inputImage, int x, int y, int mask_width, int mask_height)
-{
-	Mat outputImage;
-	int countTest = 0;
-	while (!alreadyChanged && countTest < 2)
-	{
-#ifdef USE_PTZ_ADJUSTMENT
-		//		cout << "ALIGNING AGAIN" << endl;
-		if (!Alignment::ptzAlreadyChanged)
-		{
-			Alignment::ptzAlign(refImage, inputImage, x, y, mask_width, mask_height);
-		}
-#endif // USE_PTZ_ADJUSTMENT
-		double ratio;
-		imresize(refImage, refImage.rows, ratio);
-		imresize(inputImage, inputImage.rows, ratio);
-
-		std::vector<KeyPoint> keypoints_ref, keypoints_input;
-		Mat descriptors_ref, descriptors_input;
-		std::vector<DMatch> good_matches;
-		Rect ROIRef = Rect(x/ratio, y/ratio, mask_width/ratio, mask_height/ratio);
-		Mat ROIRefMask = Mat(inputImage.size(), CV_8UC1, Scalar::all(0));
-		ROIRefMask(ROIRef).setTo(Scalar::all(255));
-
-#ifdef USE_SIFT_EXTRACTOR
-		if (!alreadyCreated)
-		{
-			Alignment::detector = SURF::create(Alignment::minHessian);
-			alreadyCreated = true;
-		}
-		detector->detectAndCompute(refImage, ROIRefMask, keypoints_ref, descriptors_ref);
-		detector->detectAndCompute(inputImage, Mat(), keypoints_input, descriptors_input);
-
-		FlannBasedMatcher matcher;
-		vector<vector<DMatch>> kmatches;
-
-		matcher.knnMatch(descriptors_ref, descriptors_input, kmatches, 2);
-		std::sort(kmatches.begin(), kmatches.end());
-		int lenghtKMatches = kmatches.size();
-		for (int i = 0; i < lenghtKMatches; i++)
-		{
-			double dist1 = kmatches[i][0].distance;
-			double dist2 = kmatches[i][1].distance;
-			double comp = dist1 / dist2;
-
-			if (comp < comparisonThreshold)
-			{
-				good_matches.push_back(kmatches[i][0]);
-			}
-		}
-#else
-		Ptr<ORB> orb = ORB::create(20000);
-		orb->setFastThreshold(0);
-		orb->detectAndCompute(refImage, ROIRefMask, keypoints_ref, descriptors_ref);
-		orb->detectAndCompute(inputImage, Mat(), keypoints_input, descriptors_input);
-
-		BFMatcher matcher(NORM_HAMMING);
-		std::vector<DMatch> matches_all;
-		matcher.match(descriptors_ref, descriptors_input, matches_all);
-
-		// GMS filter
-		int num_inliers = 0;
-		std::vector<bool> vbInliers;
-		gms_matcher gms(keypoints_ref, refImage.size(), keypoints_input, inputImage.size(), matches_all);
-		num_inliers = gms.GetInlierMask(vbInliers, false, false);
-
-//		std::cout << "Get total " << num_inliers << " matches." << std::endl;
-
-		// draw matches
-		for (size_t i = 0; i < vbInliers.size(); ++i)
-		{
-			if (vbInliers[i] == true)
-			{
-				good_matches.push_back(matches_all[i]);
-			}
-		}
-
-#endif
 		std::vector<Point2f> ptsTemp, ptsTemp2;
 		for (int i = 0; i < good_matches.size(); i++)
 		{

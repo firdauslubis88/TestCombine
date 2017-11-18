@@ -249,7 +249,17 @@ void CombinedCamera::combine_align(ofPixels ldPixel, ofImage hdImage, int image_
 	Mat source, target;
 	Point cloneCenter;
 	target = tempMatLdCvImage;
+	float start = ofGetElapsedTimef();
 	Alignment::align(tempMatLdCvImage, tempMatHdCvImage, x, y, width, height);
+	float elapsed = ofGetElapsedTimef() - start;
+	if (Alignment::AlignmentMethod == lubis::SIFT)
+	{
+		std::cout << "minHessian " << Alignment::minHessian << ":\t" << elapsed << std::endl;
+	}
+	else if (Alignment::AlignmentMethod == lubis::GMS)
+	{
+		std::cout << "orbCount " << Alignment::orbCount << ":\t" << elapsed << std::endl;
+	}
 	/*
 	if (skipCloning)
 	{
@@ -291,5 +301,20 @@ void CombinedCamera::setSkipAligning(bool value)
 void CombinedCamera::restartAligning()
 {
 	Alignment::alreadyChanged = false;
+}
+
+void CombinedCamera::setSiftMinHessian(int hess)
+{
+	Alignment::minHessian = hess;
+}
+
+void CombinedCamera::setOrbCount(int orb)
+{
+	Alignment::orbCount = orb;
+}
+
+void CombinedCamera::setAlignmentMethod(lubis::ALIGNMENT_METHOD meth)
+{
+	Alignment::AlignmentMethod = meth;
 }
 

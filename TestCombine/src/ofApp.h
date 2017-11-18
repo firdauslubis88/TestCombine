@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxGui.h"
 
 namespace lubis
 {
@@ -30,9 +31,14 @@ class ofApp : public ofBaseApp{
 		void windowResized(int w, int h);
 		void dragEvent(ofDragInfo dragInfo);
 		void gotMessage(ofMessage msg);
+		void onToggle(const void* sender);
 		
 		ofImage ldImage, hdImage, combinedImage;
 		ofPixels ldPixel;
+
+		ofxPanel gui;
+		ofxIntSlider minHessianSlider, orbCountSlider;
+		ofxButton siftButton, gmsButton;
 
 		ofVideoGrabber ldVideoGrabber, hdVideoGrabber;
 

@@ -23,6 +23,14 @@ using namespace cv::reg;
 //#define USE_PTZ_ADJUSTMENT
 #define ALIGNMENT_CHECK
 
+namespace lubis {
+	enum ALIGNMENT_METHOD
+	{
+		GMS,
+		SIFT
+	};
+}
+
 class Alignment
 {
 public:
@@ -37,6 +45,8 @@ public:
 	static bool alreadyChanged;
 	static int xReturn, yReturn;
 	static Ptr<Map> mapPtr;
+	static int minHessian, orbCount;
+	static lubis::ALIGNMENT_METHOD AlignmentMethod;
 	~Alignment();
 
 
@@ -45,7 +55,6 @@ private:
 	static float comparisonThreshold;
 	static Mat hBig;
 	static bool alreadyCreated;
-	static int minHessian;
 	static int counter;
 	static float widthRatio;
 	static float heightRatio;

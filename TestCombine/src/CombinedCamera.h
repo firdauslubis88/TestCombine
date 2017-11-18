@@ -21,6 +21,9 @@ public:
 	static void setSkipCloning(bool value);
 	static void setSkipAligning(bool value);
 	static void restartAligning();
+	static void setSiftMinHessian(int hess);
+	static void setOrbCount(int orb);
+	static void setAlignmentMethod(lubis::ALIGNMENT_METHOD meth);
 
 private:
 	std::shared_ptr<ofxCvImage> combinedImage;

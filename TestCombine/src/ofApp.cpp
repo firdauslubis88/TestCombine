@@ -2,7 +2,7 @@
 
 #include "CombinedCamera.h"
 
-#define LOGTEST
+//#define LOGTEST
 
 //--------------------------------------------------------------
 void ofApp::setup(){
@@ -27,6 +27,18 @@ void ofApp::setup(){
 		}
 	}
 	
+	minHessianSlider.setup("SIFT Hessian Value", 200, 50, 1000);
+	orbCountSlider.setup("ORB count Value", 20000, 1000, 20000);
+	siftButton.setup("SIFT");
+	siftButton.addListener(this, &ofApp::onToggle);
+	gmsButton.setup("GMS");
+	gmsButton.addListener(this, &ofApp::onToggle);
+	gui.setup();
+	gui.add(&siftButton);
+	gui.add(&minHessianSlider);
+	gui.add(&gmsButton);
+	gui.add(&orbCountSlider);
+
 	camSwitch = lubis::NONE;
 	i = 0; j = 0;
 }
@@ -35,6 +47,8 @@ void ofApp::setup(){
 void ofApp::update(){
 	ldVideoGrabber.update();
 	hdVideoGrabber.update();
+	CombinedCamera::setSiftMinHessian(minHessianSlider);
+	CombinedCamera::setOrbCount(orbCountSlider);
 }
 
 //--------------------------------------------------------------
@@ -63,30 +77,7 @@ void ofApp::draw(){
 #ifdef LOGTEST
 	std::cout << ofGetFrameRate() << std::endl;
 #endif
-
-//	if (i == 0)
-//	{
-//		double start = (double)cv::getTickCount();
-//		CombinedCamera::combine_align(ldPixel, hdImage, ofGetWidth(), 1080, ofGetWidth() / 3, ofGetHeight() / 3, ofGetWidth() / 3, ofGetHeight() / 3);
-//		double end = (double)cv::getTickCount();
-//		double timeSpan = (end - start) / cv::getTickFrequency();
-//		std::cout << "GMS:\t" << timeSpan << std::endl;
-//		i++;
-//	}
-//	double start; double timeSpan;
-//	if (j > -1)
-//	{
-//		start = (double)cv::getTickCount();
-//	}
-//	combinedImage.setFromPixels(CombinedCamera::combine_direct(ldPixel, hdImage, ofGetWidth(), 1080, ofGetWidth() / 3, ofGetHeight() / 3, ofGetWidth() / 3, ofGetHeight() / 3));
-//	if (j > -1)
-//	{
-//		double end = (double)cv::getTickCount();
-//		timeSpan = (end - start) / cv::getTickFrequency();
-//		j++;
-//		std::cout << "setPixels:\t" << timeSpan << std::endl;
-//	}
-//	combinedImage.draw(0, 0, ofGetWidth(), 1080);
+	gui.draw();
 }
 
 //--------------------------------------------------------------
@@ -156,6 +147,19 @@ void ofApp::windowResized(int w, int h){
 //--------------------------------------------------------------
 void ofApp::gotMessage(ofMessage msg){
 
+}
+
+void ofApp::onToggle(const void* sender)
+{
+	ofxButton* button = (ofxButton*)sender;
+	if (button->getName() == "GMS")
+	{
+		CombinedCamera::setAlignmentMethod(lubis::GMS);
+	}
+	else if (button->getName() == "SIFT")
+	{
+		CombinedCamera::setAlignmentMethod(lubis::SIFT);
+	}
 }
 
 //--------------------------------------------------------------
