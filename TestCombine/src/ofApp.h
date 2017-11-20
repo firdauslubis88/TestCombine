@@ -35,13 +35,16 @@ class ofApp : public ofBaseApp{
 		
 		ofImage ldImage, hdImage, combinedImage;
 		ofPixels ldPixel;
+		ofMesh mesh; ofFbo fbo;
 
 		ofxPanel gui;
 		ofxIntSlider minHessianSlider, orbCountSlider;
 		ofxButton siftButton, gmsButton;
 
 		ofVideoGrabber ldVideoGrabber, hdVideoGrabber;
+		ofEasyCam cam;
 
 		lubis::CAMSWITCH camSwitch;
 		int i, j, hdWidth, hdHeight;
+		bool ldCameraConnected, hdCameraConnected;
 };
