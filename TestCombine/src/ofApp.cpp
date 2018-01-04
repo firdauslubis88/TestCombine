@@ -7,7 +7,6 @@
 //--------------------------------------------------------------
 void ofApp::setup(){
 	ofDisableArbTex();
-	ofEnableDepthTest();
 
 	hdWidth = 960; hdHeight = 540;
 	ldImage.allocate(ofGetWidth(), ofGetHeight(), OF_IMAGE_COLOR);
@@ -40,7 +39,7 @@ void ofApp::setup(){
 	
 	cam.setAspectRatio(16. / 9.);
 	cam.setFov(90.);
-	cam.rotate(90, 1, 0, 0);
+	cam.rotate(90, 0, 1, 0);
 	cam.rotate(90, 0, 0, 1);
 
 	minHessianSlider.setup("SIFT Hessian Value", 200, 50, 1000);
@@ -75,6 +74,8 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+	ofEnableDepthTest();
+
 	if (ldCameraConnected)
 	{
 		fbo.begin();
@@ -112,8 +113,10 @@ void ofApp::draw(){
 		ofDrawBitmapStringHighlight("withoutCloningTime:\t" + std::to_string(CombinedCamera::withoutCloningTime), ofPoint(10, 270));
 		ofDrawBitmapStringHighlight("withCloningTime:\t" + std::to_string(CombinedCamera::withCloningTime), ofPoint(10, 300));
 #endif
-		ofDrawBitmapStringHighlight("FPS:\t\t\t" + std::to_string(ofGetFrameRate()), ofPoint(10, 350));
 	}
+	ofDrawBitmapStringHighlight("FPS:\t\t\t" + std::to_string(ofGetFrameRate()), ofPoint(10, 350));
+	ofDisableDepthTest();
+	gui.draw();
 }
 
 //--------------------------------------------------------------
